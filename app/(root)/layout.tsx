@@ -1,8 +1,10 @@
+import React from 'react';
 import '../globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 
 import { ClerkProvider } from '@clerk/nextjs';
+import { dark } from '@clerk/themes';
 
 import Topbar from '@/components/shared/Topbar';
 import LeftSidebar from '@/components/shared/LeftSidebar';
@@ -22,7 +24,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+      }}
+    >
       <html lang="en">
         <body className={inter.className}>
           <Topbar />
@@ -31,6 +37,7 @@ export default function RootLayout({
             <section className="main-container">
               <div className="w-full max-w-4xl">{children}</div>
             </section>
+            {/* @ts-ignore */}
             <RightSidebar />
           </main>
           <Bottombar />
