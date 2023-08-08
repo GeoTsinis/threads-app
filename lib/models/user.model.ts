@@ -1,12 +1,22 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  id: { type: String, required: true },
-  username: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
+  id: {
+    type: String,
+    required: true,
+  },
+  username: {
+    type: String,
+    unique: true,
+    required: true,
+  },
+  name: {
+    type: String,
+    required: true,
+  },
   image: String,
   bio: String,
-  thread: [
+  threads: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Thread',
@@ -19,7 +29,7 @@ const userSchema = new mongoose.Schema({
   communities: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      red: 'Communities',
+      ref: 'Community',
     },
   ],
 });
