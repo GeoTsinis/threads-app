@@ -1,18 +1,28 @@
 import mongoose from 'mongoose';
+import { isDemoMode } from './demo-mode';
 
-let isConnected = false; // checks if mongoose is connected
+let isConnected = false;
 
 export const connectToDB = async () => {
   mongoose.set('strictQuery', true);
 
-  if (!process.env.MONGODB_URL) return console.log('MONGODB_URL not found');
-  if (isConnected) return console.log('Already connected to MongoDB');
+  if (isDemoMode()) {
+    console.log('Demo mode: skipping MongoDB connection');
+    return;
+  }
+
+  if (!process.env.MONGODB_URL) {
+    console.log('MONGODB_URL not found');
+    return;
+  }
+  if (isConnected) return;
 
   try {
-    await mongoose.connect(process.env.MONGODB_URL);
-
+    await mongoose.connect(process.env.MONGODB_URL, {
+      // Prefer least privilege; connection string itself must use a limited user.
+      serverSelectionTimeoutMS: 5000,
+    });
     isConnected = true;
-    console.log('Connected to MongoDB');
   } catch (error) {
     console.log(error);
   }

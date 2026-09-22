@@ -13,7 +13,7 @@ const demoPosts = [
   {
     _id: 'demo-1',
     parentId: null,
-    text: 'Welcome to Threads — this portfolio deploy runs in demo mode with sample posts while auth and database keys are offline.',
+    text: 'Portfolio demo feed — MongoDB writes are locked unless ALLOW_LIVE_DB=true. Visitors cannot inject or mutate your database from this deploy.',
     author: {
       id: 'demo-user',
       name: 'Geo Demo',
@@ -26,10 +26,23 @@ const demoPosts = [
   {
     _id: 'demo-2',
     parentId: null,
-    text: 'Build communities, share threads, and reply in nested conversations. Connect Clerk + MongoDB to unlock the full experience.',
+    text: 'Security note: secrets stay server-side only. Never put Mongo or API keys in NEXT_PUBLIC_ / REACT_APP_ variables — those ship to the browser.',
     author: {
       id: 'demo-user-2',
       name: 'Builder',
+      image: '/assets/user.svg',
+    },
+    community: null,
+    createdAt: new Date().toISOString(),
+    children: [],
+  },
+  {
+    _id: 'demo-3',
+    parentId: null,
+    text: 'Try the layout: sidebars, thread cards, and communities UI. Connect Clerk + a least-privilege Mongo user when you want the full stack.',
+    author: {
+      id: 'demo-user-3',
+      name: 'Explorer',
       image: '/assets/user.svg',
     },
     community: null,
@@ -48,7 +61,7 @@ async function Home({
       <>
         <h1 className="head-text text-left">Home</h1>
         <p className="mt-2 text-light-3 text-base-regular">
-          Demo feed — add Clerk and MongoDB credentials for live data.
+          Hardened demo feed — no live database connection on this deploy.
         </p>
 
         <section className="mt-9 flex flex-col">
@@ -87,31 +100,29 @@ async function Home({
     result = { posts: demoPosts as any[], isNext: false };
   }
 
+  if (!result.posts?.length) {
+    result = { posts: demoPosts as any[], isNext: false };
+  }
+
   return (
     <>
       <h1 className="head-text text-left">Home</h1>
 
       <section className="mt-9 flex flex-col">
-        {result.posts.length === 0 ? (
-          <p className="no-result">No threads found</p>
-        ) : (
-          <>
-            {result.posts.map((post: any) => (
-              <div className="mt-4" key={post._id}>
-                <ThreadCard
-                  id={post._id}
-                  currentUserId={user.id}
-                  parentId={post.parentId}
-                  content={post.text}
-                  author={post.author}
-                  community={post.community}
-                  createdAt={post.createdAt}
-                  comments={post.children}
-                />
-              </div>
-            ))}
-          </>
-        )}
+        {result.posts.map((post: any) => (
+          <div className="mt-4" key={post._id}>
+            <ThreadCard
+              id={post._id}
+              currentUserId={user.id}
+              parentId={post.parentId}
+              content={post.text}
+              author={post.author}
+              community={post.community}
+              createdAt={post.createdAt}
+              comments={post.children}
+            />
+          </div>
+        ))}
       </section>
 
       <Pagination

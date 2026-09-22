@@ -3,22 +3,32 @@
 import { revalidatePath } from 'next/cache';
 
 import { connectToDB } from '../mongoose';
+import {
+  assertSafeId,
+  isDemoMode,
+  sanitizePlainText,
+} from '../demo-mode';
 
 import User from '../models/user.model';
 import Thread from '../models/thread.model';
 import Community from '../models/community.model';
 
 export async function fetchPosts(pageNumber = 1, pageSize = 20) {
+  if (isDemoMode()) {
+    return { posts: [], isNext: false };
+  }
+
   connectToDB();
 
-  // Calculate the number of posts to skip based on the page number and page size.
-  const skipAmount = (pageNumber - 1) * pageSize;
+  const safePage = Math.max(1, Number(pageNumber) || 1);
+  const safeSize = Math.min(50, Math.max(1, Number(pageSize) || 20));
+  const skipAmount = (safePage - 1) * safeSize;
 
   // Create a query to fetch the posts that have no parent (top-level threads) (a thread that is not a comment/reply).
   const postsQuery = Thread.find({ parentId: { $in: [null, undefined] } })
     .sort({ createdAt: 'desc' })
     .skip(skipAmount)
-    .limit(pageSize)
+    .limit(safeSize)
     .populate({
       path: 'author',
       model: User,
@@ -62,21 +72,29 @@ export async function createThread({
   path,
 }: Params) {
   try {
+    if (isDemoMode()) {
+      throw new Error('Demo mode: database writes are disabled');
+    }
+
+    const safeText = sanitizePlainText(text);
+    const safeAuthor = assertSafeId(author);
+    const safeCommunity =
+      communityId == null ? null : assertSafeId(communityId);
+
     connectToDB();
 
-    const communityIdObject = await Community.findOne(
-      { id: communityId },
-      { _id: 1 }
-    );
+    const communityIdObject = safeCommunity
+      ? await Community.findOne({ id: safeCommunity }, { _id: 1 })
+      : null;
 
     const createdThread = await Thread.create({
-      text,
-      author,
+      text: safeText,
+      author: safeAuthor,
       community: communityIdObject, // Assign communityId if provided, or leave it null for personal account
     });
 
     // Update User model
-    await User.findByIdAndUpdate(author, {
+    await User.findByIdAndUpdate(safeAuthor, {
       $push: { threads: createdThread._id },
     });
 
@@ -107,21 +125,28 @@ async function fetchAllChildThreads(threadId: string): Promise<any[]> {
 
 export async function deleteThread(id: string, path: string): Promise<void> {
   try {
+    if (isDemoMode()) {
+      throw new Error('Demo mode: database writes are disabled');
+    }
+
+    const safeId = assertSafeId(id);
     connectToDB();
 
     // Find the thread to be deleted (the main thread)
-    const mainThread = await Thread.findById(id).populate('author community');
+    const mainThread = await Thread.findById(safeId).populate(
+      'author community'
+    );
 
     if (!mainThread) {
       throw new Error('Thread not found');
     }
 
     // Fetch all child threads and their descendants recursively
-    const descendantThreads = await fetchAllChildThreads(id);
+    const descendantThreads = await fetchAllChildThreads(safeId);
 
     // Get all descendant thread IDs including the main thread ID and child thread IDs
     const descendantThreadIds = [
-      id,
+      safeId,
       ...descendantThreads.map((thread) => thread._id),
     ];
 
