@@ -12,21 +12,30 @@ export const metadata: Metadata = {
 };
 
 const inter = Inter({ subsets: ['latin'] });
+const hasClerk = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const body = (
+    <html lang="en">
+      <body className={`${inter.className} bg-dark-1`}>{children}</body>
+    </html>
+  );
+
+  if (!hasClerk) {
+    return body;
+  }
+
   return (
     <ClerkProvider
       appearance={{
         baseTheme: dark,
       }}
     >
-      <html lang="en">
-        <body className={`${inter.className} bg-dark-1`}>{children}</body>
-      </html>
+      {body}
     </ClerkProvider>
   );
 }

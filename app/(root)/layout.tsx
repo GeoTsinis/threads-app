@@ -12,6 +12,7 @@ import RightSidebar from '@/components/shared/RightSidebar';
 import Bottombar from '@/components/shared/Bottombar';
 
 const inter = Inter({ subsets: ['latin'] });
+const hasClerk = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
 
 export const metadata: Metadata = {
   title: 'Threads',
@@ -23,26 +24,34 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const body = (
+    <html lang="en">
+      <body className={inter.className}>
+        <Topbar />
+        <main className="flex flex-row">
+          <LeftSidebar />
+          <section className="main-container">
+            <div className="w-full max-w-4xl">{children}</div>
+          </section>
+          {/* @ts-ignore */}
+          <RightSidebar />
+        </main>
+        <Bottombar />
+      </body>
+    </html>
+  );
+
+  if (!hasClerk) {
+    return body;
+  }
+
   return (
     <ClerkProvider
       appearance={{
         baseTheme: dark,
       }}
     >
-      <html lang="en">
-        <body className={inter.className}>
-          <Topbar />
-          <main className="flex flex-row">
-            <LeftSidebar />
-            <section className="main-container">
-              <div className="w-full max-w-4xl">{children}</div>
-            </section>
-            {/* @ts-ignore */}
-            <RightSidebar />
-          </main>
-          <Bottombar />
-        </body>
-      </html>
+      {body}
     </ClerkProvider>
   );
 }

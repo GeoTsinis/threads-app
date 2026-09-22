@@ -1,9 +1,30 @@
-import { OrganizationSwitcher, SignedIn, SignOutButton } from '@clerk/nextjs';
-import { dark } from '@clerk/themes';
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
-function Topbar() {
+const hasClerk = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
+function DemoTopbar() {
+  return (
+    <nav className="topbar">
+      <Link href="/" className="flex items-center gap-4">
+        <Image src="/assets/logo.svg" alt="logo" width={20} height={20} />
+        <p className="text-heading3-bold text-light-1 max-xs:hidden">Threads</p>
+      </Link>
+      <p className="text-light-3 text-small-regular">Demo mode</p>
+    </nav>
+  );
+}
+
+function ClerkTopbar() {
+  const {
+    OrganizationSwitcher,
+    SignedIn,
+    SignOutButton,
+  } = require('@clerk/nextjs');
+  const { dark } = require('@clerk/themes');
+
   return (
     <nav className="topbar">
       <Link href="/" className="flex items-center gap-4">
@@ -38,6 +59,11 @@ function Topbar() {
       </div>
     </nav>
   );
+}
+
+function Topbar() {
+  if (!hasClerk) return <DemoTopbar />;
+  return <ClerkTopbar />;
 }
 
 export default Topbar;
